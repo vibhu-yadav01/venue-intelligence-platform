@@ -182,3 +182,17 @@ PromptWar/
 ## 📄 License
 
 MIT
+
+## 📸 Screenshots
+
+### 🎛️ Operator Dashboard
+![Dashboard](assets/dashboard.png)
+
+### 📱 Mobile App - Navigation
+![Navigation](assets/navigation.png)
+
+### 📊 Queue Monitoring
+![Queue](assets/queue.png)
+
+### 🗺️ Heatmap View
+![Heatmap](assets/mobile-home.png)
