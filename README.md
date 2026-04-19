@@ -244,3 +244,8 @@ All components work together in an event-driven architecture to continuously upd
 
 ### 🗺️ Heatmap View
 ![Heatmap](assets/mobile-home.png)
+
+## 🌐 Live Demo
+
+- Operator Dashboard: https://your-app.onrender.com/dashboard  
+- Attendee Mobile App: https://your-app.onrender.com/mobile  
