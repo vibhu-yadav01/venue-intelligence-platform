@@ -247,5 +247,5 @@ All components work together in an event-driven architecture to continuously upd
 
 ## 🌐 Live Demo
 
-- Operator Dashboard: https://your-app.onrender.com/dashboard  
-- Attendee Mobile App: https://your-app.onrender.com/mobile  
+- Operator Dashboard: https://venue-intelligence-platform.onrender.com/dashboard/  
+- Attendee Mobile App: https://venue-intelligence-platform.onrender.com/mobile/  
