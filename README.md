@@ -1,10 +1,11 @@
 # 🏟️ Intelligent Venue Experience Platform
 
-> Real-time crowd intelligence for large-scale sporting venues (50K+ capacity)
+> This system acts as a real-time assistant for attendees, helping them make optimal decisions inside the venue.
 
 
 A multi-tenant SaaS platform that reduces congestion, minimizes wait times, provides smart navigation, and enables real-time coordination for venue operators.
 
+Uses Google Maps Platform (conceptually / extendable) for venue mapping and routing integration.
 ---
 
 ## 🚀 Quick Start
@@ -182,6 +183,53 @@ PromptWar/
 ## 📄 License
 
 MIT
+
+
+## 🎯 Challenge Vertical
+Smart Venue Experience / Crowd Management
+
+## 🧠 Approach
+
+The system is designed as a real-time decision intelligence platform that processes live venue data and provides actionable insights to users.
+
+Key components:
+
+- **Crowd Engine**: Aggregates users into zones and calculates real-time density
+- **Queue Engine**: Estimates wait times using queue length and service rate with smoothing
+- **Routing Engine**: Uses Dijkstra’s algorithm with crowd-aware weights to find optimal paths
+- **Decision Engine**: Applies rule-based logic to trigger alerts, rerouting, and recommendations
+
+All components work together in an event-driven architecture to continuously update the system state and respond to changing conditions.
+
+## ⚙️ How It Works
+
+1. **Simulation Engine** generates realistic crowd movement and queue data (since no IoT is used in MVP)
+
+2. **Data Processing**
+   - Crowd Engine updates zone densities
+   - Queue Engine calculates wait times
+   - Routing Engine computes optimal paths
+
+3. **Decision Engine**
+   - Detects congestion and anomalies
+   - Generates alerts and recommendations
+   - Suggests better routes and vendor choices
+
+4. **Real-Time Updates**
+   - Data is pushed to the dashboard and mobile app via WebSockets
+   - Users receive live updates, alerts, and navigation suggestions
+
+5. **User Interaction**
+   - Attendees view heatmaps, queues, and routes
+   - Operators monitor and control venue flow
+
+## 📌 Assumptions
+
+- No physical IoT devices are used; crowd data is simulated for MVP
+- User location is mapped to predefined zones instead of precise GPS tracking
+- Queue data is estimated using user activity and statistical models
+- Venue layout is modeled as a graph for routing
+- System is designed to be extensible with real sensors and Google Maps integration
 
 ## 📸 Screenshots
 
