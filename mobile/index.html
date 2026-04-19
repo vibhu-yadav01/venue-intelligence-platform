@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#06070E">
+  <title>VenueGo | Smart Venue Navigator</title>
+  <meta name="description" content="Real-time crowd navigation, queue times, and smart routing for venue attendees">
+  <link rel="manifest" href="manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════ */
+    /*  MOBILE DESIGN SYSTEM                                 */
+    /* ═══════════════════════════════════════════════════════ */
+    :root {
+      --bg-primary: #06070E;
+      --bg-secondary: #0D0F1A;
+      --bg-card: rgba(15, 18, 35, 0.8);
+      --bg-card-hover: rgba(22, 26, 50, 0.9);
+      --border-subtle: rgba(99, 102, 241, 0.1);
+      --border-glow: rgba(99, 102, 241, 0.25);
+      --text-primary: #F0F1F5;
+      --text-secondary: #8B8FA3;
+      --text-muted: #555770;
+      --accent-blue: #667EEA;
+      --accent-purple: #764BA2;
+      --accent-pink: #F093FB;
+      --gradient-primary: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+      --green: #00D4AA;
+      --yellow: #FFC107;
+      --orange: #FF7043;
+      --red: #FF1744;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --nav-height: 70px;
+      --header-height: 56px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.07) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 80%, rgba(118, 75, 162, 0.05) 0%, transparent 60%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: var(--header-height);
+      background: rgba(6, 7, 14, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient-primary);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 3px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .header-name {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-phase {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent-blue);
+      background: rgba(99, 102, 241, 0.12);
+      padding: 4px 10px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── CONTENT AREA ─── */
+    .content {
+      position: relative;
+      z-index: 1;
+      padding-top: var(--header-height);
+      padding-bottom: calc(var(--nav-height) + 16px);
+    }
+
+    .page {
+      display: none;
+      padding: 16px 16px 0;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── SECTION TITLES ─── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      padding-left: 2px;
+    }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+
+    .card:active {
+      transform: scale(0.98);
+    }
+
+    /* ─── NOTIFICATION BANNER ─── */
+    .notification-container {
+      position: fixed;
+      top: calc(var(--header-height) + 8px);
+      left: 12px;
+      right: 12px;
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .notification-banner {
+      background: rgba(10, 12, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      animation: notifIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: all;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    @keyframes notifIn {
+      from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .notif-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+    .notif-content { flex: 1; }
+
+    .notif-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .notif-message {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .notif-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /*  HOME PAGE                                       */
+    /* ══════════════════════════════════════════════════ */
+
+    /* Mini Heatmap */
+    .mini-map-card {
+      padding: 16px;
+      position: relative;
+    }
+
+    .mini-map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .mini-map-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .mini-map-live {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .mini-map-svg {
+      width: 100%;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .mini-zone {
+      transition: fill 0.5s ease;
+      rx: 4;
+      ry: 4;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 1;
+    }
+
+    .mini-zone-label {
+      fill: rgba(255, 255, 255, 0.6);
+      font-family: 'Inter', sans-serif;
+      font-size: 5px;
+      font-weight: 600;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .mini-legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .mini-legend-bar {
+      width: 70px;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, #00D4AA, #FFC107, #FF1744);
+    }
+
+    /* Quick Stats Row */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .quick-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .quick-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quick-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Recommended Vendors */
+    .vendor-rec-card {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      gap: 12px;
+    }
+
+    .vendor-rec-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .vendor-rec-icon.food { background: rgba(255, 152, 0, 0.15); }
+    .vendor-rec-icon.beverage { background: rgba(0, 212, 170, 0.15); }
+    .vendor-rec-icon.merchandise { background: rgba(99, 102, 241, 0.15); }
+
+    .vendor-rec-info { flex: 1; min-width: 0; }
+
+    .vendor-rec-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .vendor-rec-detail {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .vendor-rec-wait {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .vendor-rec-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .vendor-rec-time.low { color: var(--green); }
+    .vendor-rec-time.medium { color: var(--yellow); }
+    .vendor-rec-time.high { color: var(--orange); }
+    .vendor-rec-time.critical { color: var(--red); }
+
+    .vendor-rec-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .sponsored-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--accent-pink);
+      background: rgba(240, 147, 251, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /*  MAP PAGE                                        */
+    /* ══════════════════════════════════════════════════ */
+    .full-map-container {
+      padding: 12px;
+    }
+
+    .full-map-svg {
+      width: 100%;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .full-zone {
+      cursor: pointer;
+      transition: fill 0.5s ease;
+      rx: 3;
+      ry: 3;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 0.8;
+    }
+
+    .full-zone:active { stroke: rgba(255, 255, 255, 0.5); stroke-width: 2; }
+
+    .full-zone-label {
+      fill: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 6.5px;
+      font-weight: 600;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .full-zone-count {
+      fill: rgba(255, 255, 255, 0.7);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7px;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    /* Zone detail card */
+    .zone-detail {
+      display: none;
+      padding: 16px;
+      animation: slideUp 0.3s ease;
+    }
+
+    .zone-detail.active { display: block; }
+
+    @keyframes slideUp {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .zone-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .zone-detail h3 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .zone-detail-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .zone-detail-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .zone-stat {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+    }
+
+    .zone-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .zone-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /*  QUEUES PAGE                                     */
+    /* ══════════════════════════════════════════════════ */
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      gap: 14px;
+    }
+
+    .queue-rank {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .queue-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .queue-item-info { flex: 1; min-width: 0; }
+
+    .queue-item-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .queue-item-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .queue-item-wait {
+      text-align: right;
+    }
+
+    .queue-item-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .queue-item-time.low { color: var(--green); }
+    .queue-item-time.medium { color: var(--yellow); }
+    .queue-item-time.high { color: var(--orange); }
+    .queue-item-time.critical { color: var(--red); }
+
+    .queue-item-people {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Filter chips */
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .chip.active {
+      background: var(--gradient-primary);
+      border-color: transparent;
+      color: white;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /*  NAVIGATE PAGE                                   */
+    /* ══════════════════════════════════════════════════ */
+    .nav-form { padding: 16px; }
+
+    .nav-select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .nav-select-wrapper {
+      position: relative;
+    }
+
+    .nav-select-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .nav-select {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      appearance: none;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .nav-select:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .nav-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--gradient-primary);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .nav-btn:active { transform: scale(0.98); }
+
+    .quick-nav-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .quick-nav-btn {
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .quick-nav-btn:active {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+    }
+
+    .quick-nav-btn .btn-emoji {
+      font-size: 22px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* Route result */
+    .route-result {
+      display: none;
+      padding: 16px;
+      animation: slideUp 0.3s ease;
+    }
+
+    .route-result.active { display: block; }
+
+    .route-summary {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 16px;
+      padding: 14px;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-sm);
+    }
+
+    .route-stat { text-align: center; }
+
+    .route-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .route-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    .route-steps { display: flex; flex-direction: column; gap: 0; }
+
+    .route-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      position: relative;
+    }
+
+    .route-step::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 36px;
+      bottom: -12px;
+      width: 2px;
+      background: var(--border-subtle);
+    }
+
+    .route-step:last-child::before { display: none; }
+
+    .route-step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .route-step:first-child .route-step-dot { border-color: var(--green); background: rgba(0, 212, 170, 0.15); }
+    .route-step:last-child .route-step-dot { border-color: var(--accent-pink); background: rgba(240, 147, 251, 0.15); }
+
+    .route-step-info { flex: 1; }
+
+    .route-step-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .route-step-detail {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ─── BOTTOM NAVIGATION ─── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: rgba(6, 7, 14, 0.92);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 12px;
+      transition: var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-item.active .nav-icon {
+      transform: scale(1.1);
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--accent-blue);
+    }
+
+    .nav-icon {
+      font-size: 22px;
+      transition: var(--transition);
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .nav-item.active {
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty-state-text { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <!-- ─── HEADER ─── -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">🏟️</div>
+      <div class="header-name">VenueGo</div>
+    </div>
+    <div class="header-phase" id="mobilePhase">IDLE</div>
+  </header>
+
+  <!-- ─── NOTIFICATIONS ─── -->
+  <div class="notification-container" id="notifContainer"></div>
+
+  <!-- ─── CONTENT ─── -->
+  <div class="content">
+
+    <!-- ══════════ HOME PAGE ══════════ -->
+    <div class="page active" id="page-home">
+      <!-- Quick Stats -->
+      <div class="quick-stats">
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="mobileAttendees">0</div>
+          <div class="quick-stat-label">Attendees</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="mobileAvgWait">0m</div>
+          <div class="quick-stat-label">Avg Wait</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="mobileAlerts">0</div>
+          <div class="quick-stat-label">Alerts</div>
+        </div>
+      </div>
+
+      <!-- Mini Heatmap -->
+      <div class="card mini-map-card">
+        <div class="mini-map-header">
+          <div class="mini-map-title">Venue Heatmap</div>
+          <div class="mini-map-live">
+            <div class="live-dot"></div> LIVE
+          </div>
+        </div>
+        <svg class="mini-map-svg" viewBox="40 -5 830 715" id="miniMap">
+          <!-- Field -->
+          <rect x="320" y="255" width="260" height="190" rx="10" 
+                fill="rgba(0, 212, 170, 0.06)" stroke="rgba(0, 212, 170, 0.15)" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="450" y="355" text-anchor="middle" fill="rgba(0, 212, 170, 0.25)" 
+                font-family="Inter" font-size="10" font-weight="600">FIELD</text>
+          <g id="miniZonesGroup"></g>
+        </svg>
+        <div class="mini-legend">
+          <span>Low</span>
+          <div class="mini-legend-bar"></div>
+          <span>Critical</span>
+        </div>
+      </div>
+
+      <!-- Recommended Vendors -->
+      <div class="section-title" style="margin-top: 16px;">🍽️ Recommended For You</div>
+      <div id="vendorRecList">
+        <div class="card">
+          <div class="empty-state">
+            <div class="empty-state-icon">🍔</div>
+            <div class="empty-state-text">Vendor recommendations appear during events</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ MAP PAGE ══════════ -->
+    <div class="page" id="page-map">
+      <div class="card full-map-container">
+        <svg class="full-map-svg" viewBox="40 -5 830 715" id="fullMap">
+          <!-- Field -->
+          <rect x="320" y="255" width="260" height="190" rx="10"
+                fill="rgba(0, 212, 170, 0.06)" stroke="rgba(0, 212, 170, 0.15)" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="450" y="350" text-anchor="middle" fill="rgba(0, 212, 170, 0.2)" 
+                font-family="Inter" font-size="10" font-weight="600">⚽ FIELD</text>
+          <g id="fullZonesGroup"></g>
+        </svg>
+      </div>
+      <div class="card zone-detail" id="zoneDetailCard">
+        <div class="zone-detail-header">
+          <h3 id="zoneDetailName">Zone Name</h3>
+          <button class="zone-detail-close" onclick="closeZoneDetail()">✕</button>
+        </div>
+        <div class="zone-detail-stats">
+          <div class="zone-stat">
+            <div class="zone-stat-label">People</div>
+            <div class="zone-stat-value" id="zoneDetailCount">0</div>
+          </div>
+          <div class="zone-stat">
+            <div class="zone-stat-label">Capacity</div>
+            <div class="zone-stat-value" id="zoneDetailCapacity">0</div>
+          </div>
+          <div class="zone-stat">
+            <div class="zone-stat-label">Density</div>
+            <div class="zone-stat-value" id="zoneDetailDensity">0%</div>
+          </div>
+          <div class="zone-stat">
+            <div class="zone-stat-label">Status</div>
+            <div class="zone-stat-value" id="zoneDetailStatus">Normal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ QUEUES PAGE ══════════ -->
+    <div class="page" id="page-queues">
+      <div class="filter-chips" id="filterChips">
+        <div class="chip active" data-filter="all" onclick="filterVendors('all')">All</div>
+        <div class="chip" data-filter="food" onclick="filterVendors('food')">🍔 Food</div>
+        <div class="chip" data-filter="beverage" onclick="filterVendors('beverage')">🍺 Beverage</div>
+        <div class="chip" data-filter="merchandise" onclick="filterVendors('merchandise')">👕 Merch</div>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="card">
+          <div class="empty-state">
+            <div class="empty-state-icon">⏱️</div>
+            <div class="empty-state-text">Queue data appears during events</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ NAVIGATE PAGE ══════════ -->
+    <div class="page" id="page-navigate">
+      <div class="card nav-form">
+        <div class="nav-select-group">
+          <div>
+            <div class="nav-select-label">📍 Your Location</div>
+            <select class="nav-select" id="navFrom">
+              <option value="">Select your zone</option>
+            </select>
+          </div>
+          <div>
+            <div class="nav-select-label">🎯 Destination</div>
+            <select class="nav-select" id="navTo">
+              <option value="">Select destination</option>
+            </select>
+          </div>
+        </div>
+        <button class="nav-btn" onclick="findRoute()">🧭 Find Smartest Route</button>
+
+        <div class="quick-nav-btns">
+          <button class="quick-nav-btn" onclick="findNearestType('food_court')">
+            <span class="btn-emoji">🍕</span> Nearest Food
+          </button>
+          <button class="quick-nav-btn" onclick="findNearestType('restroom')">
+            <span class="btn-emoji">🚻</span> Nearest Restroom
+          </button>
+          <button class="quick-nav-btn" onclick="findNearestType('gate')">
+            <span class="btn-emoji">🚪</span> Nearest Exit
+          </button>
+          <button class="quick-nav-btn" onclick="findNearestType('merchandise')">
+            <span class="btn-emoji">👕</span> Team Store
+          </button>
+        </div>
+      </div>
+
+      <div class="card route-result" id="routeResult">
+        <div class="route-summary">
+          <div class="route-stat">
+            <div class="route-stat-value" id="routeTime">0m</div>
+            <div class="route-stat-label">Est. Time</div>
+          </div>
+          <div class="route-stat">
+            <div class="route-stat-value" id="routeSteps">0</div>
+            <div class="route-stat-label">Steps</div>
+          </div>
+          <div class="route-stat">
+            <div class="route-stat-value" id="routeScore">0</div>
+            <div class="route-stat-label">Cost</div>
+          </div>
+        </div>
+        <div class="route-steps" id="routeStepsList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── BOTTOM NAVIGATION ─── -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchPage('home')" data-page="home">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+    </div>
+    <div class="nav-item" onclick="switchPage('map')" data-page="map">
+      <div class="nav-icon">🗺️</div>
+      <div class="nav-label">Map</div>
+    </div>
+    <div class="nav-item" onclick="switchPage('queues')" data-page="queues">
+      <div class="nav-icon">⏱️</div>
+      <div class="nav-label">Queues</div>
+    </div>
+    <div class="nav-item" onclick="switchPage('navigate')" data-page="navigate">
+      <div class="nav-icon">🧭</div>
+      <div class="nav-label">Navigate</div>
+    </div>
+  </nav>
+
+  <!-- ─── SOCKET.IO ─── -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════
+    const API_BASE = window.location.origin;
+    let socket = null;
+    let currentState = null;
+    let currentFilter = 'all';
+    let miniZoneElements = {};
+    let fullZoneElements = {};
+    let zonesInitialized = false;
+    let notifQueue = [];
+
+    // ─── Helpers ───
+    function densityColor(d) {
+      if (d <= 0) return 'rgba(0, 212, 170, 0.15)';
+      if (d < 0.15) return 'rgba(0, 212, 170, 0.3)';
+      if (d < 0.3) return 'rgba(0, 212, 170, 0.5)';
+      if (d < 0.5) return 'rgba(78, 205, 196, 0.55)';
+      if (d < 0.65) return 'rgba(255, 193, 7, 0.55)';
+      if (d < 0.8) return 'rgba(255, 152, 0, 0.6)';
+      if (d < 0.9) return 'rgba(255, 112, 67, 0.65)';
+      if (d < 0.95) return 'rgba(255, 82, 82, 0.7)';
+      return 'rgba(255, 23, 68, 0.8)';
+    }
+
+    function densityColorSolid(d) {
+      if (d < 0.3) return '#00D4AA';
+      if (d < 0.6) return '#FFC107';
+      if (d < 0.8) return '#FF7043';
+      return '#FF1744';
+    }
+
+    function waitClass(seconds) {
+      const min = seconds / 60;
+      if (min < 2) return 'low';
+      if (min < 5) return 'medium';
+      if (min < 10) return 'high';
+      return 'critical';
+    }
+
+    function formatTime(seconds) {
+      if (seconds < 60) return `${Math.round(seconds)}s`;
+      return `${Math.round(seconds / 60)}m`;
+    }
+
+    function vendorIcon(type) {
+      if (type === 'food') return '🍔';
+      if (type === 'beverage') return '🍺';
+      if (type === 'merchandise') return '👕';
+      return '🏪';
+    }
+
+    function densityStatus(d) {
+      if (d > 0.95) return '🔴 Critical';
+      if (d > 0.8) return '🟠 High';
+      if (d > 0.6) return '🟡 Moderate';
+      if (d > 0.3) return '🟢 Normal';
+      return '⚪ Low';
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PAGE NAVIGATION
+    // ═══════════════════════════════════════════════════════════
+    function switchPage(pageName) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      document.getElementById(`page-${pageName}`).classList.add('active');
+      document.querySelector(`.nav-item[data-page="${pageName}"]`).classList.add('active');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════
+
+    function initZones(zones) {
+      if (zonesInitialized) return;
+      zonesInitialized = true;
+
+      // Mini map
+      const miniGroup = document.getElementById('miniZonesGroup');
+      for (const z of zones) {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('class', 'mini-zone');
+        rect.setAttribute('x', z.x); rect.setAttribute('y', z.y);
+        rect.setAttribute('width', z.w); rect.setAttribute('height', z.h);
+        rect.setAttribute('fill', densityColor(0));
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('class', 'mini-zone-label');
+        label.setAttribute('x', z.x + z.w / 2); label.setAttribute('y', z.y + z.h / 2 + 2);
+        label.textContent = z.name.replace('North', 'N').replace('South', 'S').replace('East', 'E').replace('West', 'W')
+          .replace('Concourse', 'Conc').replace('Restrooms', 'WC').replace('Food Court', 'Food').replace('Stand', 'Std').replace('Gate', 'Gate');
+
+        miniGroup.appendChild(rect);
+        miniGroup.appendChild(label);
+        miniZoneElements[z.id] = { rect, label };
+      }
+
+      // Full map
+      const fullGroup = document.getElementById('fullZonesGroup');
+      for (const z of zones) {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('class', 'full-zone');
+        rect.setAttribute('x', z.x); rect.setAttribute('y', z.y);
+        rect.setAttribute('width', z.w); rect.setAttribute('height', z.h);
+        rect.setAttribute('fill', densityColor(0));
+        rect.setAttribute('data-zone-id', z.id);
+        rect.addEventListener('click', () => showZoneDetail(z));
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('class', 'full-zone-label');
+        label.setAttribute('x', z.x + z.w / 2); label.setAttribute('y', z.y + z.h / 2 - 3);
+        label.textContent = z.name;
+
+        const count = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        count.setAttribute('class', 'full-zone-count');
+        count.setAttribute('x', z.x + z.w / 2); count.setAttribute('y', z.y + z.h / 2 + 8);
+        count.textContent = '0';
+
+        fullGroup.appendChild(rect);
+        fullGroup.appendChild(label);
+        fullGroup.appendChild(count);
+        fullZoneElements[z.id] = { rect, label, count };
+      }
+
+      // Populate navigation dropdowns
+      const navFrom = document.getElementById('navFrom');
+      const navTo = document.getElementById('navTo');
+      for (const z of zones) {
+        const opt1 = new Option(`${z.name} (${z.type.replace('_', ' ')})`, z.id);
+        const opt2 = new Option(`${z.name} (${z.type.replace('_', ' ')})`, z.id);
+        navFrom.appendChild(opt1);
+        navTo.appendChild(opt2);
+      }
+    }
+
+    function updateMaps(zones) {
+      for (const z of zones) {
+        // Mini map
+        if (miniZoneElements[z.id]) {
+          miniZoneElements[z.id].rect.setAttribute('fill', densityColor(z.density || 0));
+        }
+        // Full map
+        if (fullZoneElements[z.id]) {
+          fullZoneElements[z.id].rect.setAttribute('fill', densityColor(z.density || 0));
+          fullZoneElements[z.id].count.textContent = (z.currentCount || 0).toLocaleString();
+        }
+      }
+    }
+
+    function renderVendorRecommendations(vendors) {
+      const container = document.getElementById('vendorRecList');
+      const sorted = [...vendors]
+        .filter(v => v.isActive !== false)
+        .sort((a, b) => a.estimatedWait - b.estimatedWait)
+        .slice(0, 5);
+
+      if (sorted.length === 0 || sorted.every(v => v.currentQueue === 0)) {
+        container.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">🍔</div><div class="empty-state-text">Vendor recommendations appear during events</div></div></div>`;
+        return;
+      }
+
+      container.innerHTML = sorted.map(v => {
+        const wc = waitClass(v.estimatedWait);
+        const icon = vendorIcon(v.type);
+        const sponsored = v.bidValue > 50 ? '<span class="sponsored-badge">PROMOTED</span>' : '';
+        return `<div class="card vendor-rec-card">
+          <div class="vendor-rec-icon ${v.type}">${icon}</div>
+          <div class="vendor-rec-info">
+            <div class="vendor-rec-name">${v.name} ${sponsored}</div>
+            <div class="vendor-rec-detail">${v.type} · ${v.currentQueue} in line</div>
+          </div>
+          <div class="vendor-rec-wait">
+            <div class="vendor-rec-time ${wc}">${formatTime(v.estimatedWait)}</div>
+            <div class="vendor-rec-label">wait</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderQueueList(vendors) {
+      const container = document.getElementById('queueList');
+      let filtered = [...vendors];
+      if (currentFilter !== 'all') {
+        filtered = filtered.filter(v => v.type === currentFilter);
+      }
+      filtered.sort((a, b) => a.estimatedWait - b.estimatedWait);
+
+      if (filtered.length === 0 || filtered.every(v => v.currentQueue === 0)) {
+        container.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">⏱️</div><div class="empty-state-text">Queue data appears during events</div></div></div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map((v, i) => {
+        const wc = waitClass(v.estimatedWait);
+        const icon = vendorIcon(v.type);
+        return `<div class="card queue-item">
+          <div class="queue-rank">#${i + 1}</div>
+          <div class="queue-item-icon ${v.type}" style="background: rgba(99, 102, 241, 0.1);">${icon}</div>
+          <div class="queue-item-info">
+            <div class="queue-item-name">${v.name}</div>
+            <div class="queue-item-meta">${v.type} · ${v.zoneId}</div>
+          </div>
+          <div class="queue-item-wait">
+            <div class="queue-item-time ${wc}">${formatTime(v.estimatedWait)}</div>
+            <div class="queue-item-people">${v.currentQueue} in line</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function updateQuickStats(state) {
+      document.getElementById('mobileAttendees').textContent = (state.totalAttendees || 0).toLocaleString();
+      document.getElementById('mobilePhase').textContent = (state.simulationPhase || 'idle').toUpperCase();
+
+      const vendors = state.vendors || [];
+      const active = vendors.filter(v => v.currentQueue > 0);
+      const avgWait = active.length > 0
+        ? active.reduce((s, v) => s + v.estimatedWait, 0) / active.length : 0;
+      document.getElementById('mobileAvgWait').textContent = formatTime(avgWait);
+
+      const alerts = (state.alerts || []).filter(a => !a.isResolved);
+      document.getElementById('mobileAlerts').textContent = alerts.length;
+    }
+
+    // ─── Zone Detail ───
+    function showZoneDetail(zone) {
+      const latest = currentState?.zones?.find(z => z.id === zone.id) || zone;
+      document.getElementById('zoneDetailName').textContent = latest.name;
+      document.getElementById('zoneDetailCount').textContent = (latest.currentCount || 0).toLocaleString();
+      document.getElementById('zoneDetailCapacity').textContent = latest.capacity.toLocaleString();
+      document.getElementById('zoneDetailDensity').textContent = Math.round((latest.density || 0) * 100) + '%';
+      document.getElementById('zoneDetailDensity').style.color = densityColorSolid(latest.density || 0);
+      document.getElementById('zoneDetailStatus').textContent = densityStatus(latest.density || 0);
+      document.getElementById('zoneDetailCard').classList.add('active');
+    }
+
+    function closeZoneDetail() {
+      document.getElementById('zoneDetailCard').classList.remove('active');
+    }
+
+    // ─── Filter ───
+    function filterVendors(type) {
+      currentFilter = type;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      document.querySelector(`.chip[data-filter="${type}"]`).classList.add('active');
+      if (currentState?.vendors) renderQueueList(currentState.vendors);
+    }
+
+    // ─── Notifications ───
+    function showNotification(notif) {
+      const container = document.getElementById('notifContainer');
+      const el = document.createElement('div');
+      el.className = 'notification-banner';
+
+      const iconMap = {
+        congestion: '⚠️', reroute: '🔀', promotion: '🎉',
+        manual: '📢', anomaly: '🔍', queue_spike: '📈'
+      };
+
+      el.innerHTML = `
+        <div class="notif-icon">${iconMap[notif.type] || '🔔'}</div>
+        <div class="notif-content">
+          <div class="notif-title">${notif.title || 'Venue Alert'}</div>
+          <div class="notif-message">${notif.message}</div>
+        </div>
+        <button class="notif-close" onclick="this.parentElement.remove()">✕</button>
+      `;
+
+      container.appendChild(el);
+
+      // Auto-remove after 8 seconds
+      setTimeout(() => {
+        if (el.parentElement) {
+          el.style.transition = 'all 0.3s ease';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-10px)';
+          setTimeout(() => el.remove(), 300);
+        }
+      }, 8000);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // NAVIGATION / ROUTING
+    // ═══════════════════════════════════════════════════════════
+    async function findRoute() {
+      const from = document.getElementById('navFrom').value;
+      const to = document.getElementById('navTo').value;
+      if (!from || !to) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/route`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from, to }),
+        });
+        const { route } = await res.json();
+        displayRoute(route);
+      } catch (err) {
+        console.error('Route error:', err);
+      }
+    }
+
+    async function findNearestType(type) {
+      const from = document.getElementById('navFrom').value;
+      if (!from) {
+        alert('Please select your current location first');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/nearest?from=${from}&type=${type}`);
+        const { result } = await res.json();
+        if (result) {
+          displayRoute(result);
+          if (result.destination) {
+            document.getElementById('navTo').value = result.destination.id;
+          }
+        }
+      } catch (err) {
+        console.error('Nearest error:', err);
+      }
+    }
+
+    function displayRoute(route) {
+      if (!route || route.error) {
+        alert(route?.error || 'No route found');
+        return;
+      }
+
+      document.getElementById('routeTime').textContent =
+        route.estimatedTimeMinutes ? `${route.estimatedTimeMinutes}m` : `${route.estimatedTimeSeconds}s`;
+      document.getElementById('routeSteps').textContent = route.path?.length || 0;
+      document.getElementById('routeScore').textContent = route.totalCost;
+
+      const stepsList = document.getElementById('routeStepsList');
+      const segments = route.segments || [];
+      const path = route.path || [];
+
+      let html = '';
+      for (let i = 0; i < path.length; i++) {
+        const zoneId = path[i];
+        const zone = currentState?.zones?.find(z => z.id === zoneId);
+        const seg = segments[i - 1]; // segment leading TO this zone
+
+        let icon = '📍';
+        if (i === 0) icon = '🟢';
+        else if (i === path.length - 1) icon = '🏁';
+
+        let detail = zone ? `${zone.type.replace('_', ' ')} · ${Math.round((zone.density || 0) * 100)}% full` : '';
+        if (seg) {
+          detail += ` · Crowd penalty: ${seg.crowdPenalty}`;
+        }
+
+        html += `<div class="route-step">
+          <div class="route-step-dot">${icon}</div>
+          <div class="route-step-info">
+            <div class="route-step-name">${zone?.name || zoneId}</div>
+            <div class="route-step-detail">${detail}</div>
+          </div>
+        </div>`;
+      }
+
+      stepsList.innerHTML = html;
+      document.getElementById('routeResult').classList.add('active');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBSOCKET
+    // ═══════════════════════════════════════════════════════════
+    function connectSocket() {
+      socket = io(API_BASE);
+
+      socket.on('connect', () => {
+        console.log('[Mobile WS] Connected');
+      });
+
+      socket.on('state', (state) => {
+        currentState = state;
+
+        // Initialize zone elements on first state
+        if (state.zones && !zonesInitialized) {
+          initZones(state.zones);
+        }
+
+        // Update all views
+        if (state.zones) updateMaps(state.zones);
+        if (state.vendors) {
+          renderVendorRecommendations(state.vendors);
+          renderQueueList(state.vendors);
+        }
+        updateQuickStats(state);
+      });
+
+      socket.on('notification', (notif) => {
+        showNotification(notif);
+      });
+
+      socket.on('alert', (alert) => {
+        // Show critical alerts as notifications to attendees
+        if (alert.severity === 'critical') {
+          showNotification({
+            type: alert.type,
+            title: '⚠️ Venue Alert',
+            message: alert.message,
+          });
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      connectSocket();
+    });
+  </script>
+</body>
+</html>

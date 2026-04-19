@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venue Command Center | Intelligent Venue Experience Platform</title>
+  <meta name="description" content="Real-time operator dashboard for crowd management, queue monitoring, and venue analytics">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════ */
+    /*  DESIGN SYSTEM                                        */
+    /* ═══════════════════════════════════════════════════════ */
+    :root {
+      --bg-primary: #06070E;
+      --bg-secondary: #0D0F1A;
+      --bg-card: rgba(15, 18, 35, 0.75);
+      --bg-card-hover: rgba(20, 25, 50, 0.85);
+      --border-subtle: rgba(99, 102, 241, 0.12);
+      --border-glow: rgba(99, 102, 241, 0.3);
+      --text-primary: #F0F1F5;
+      --text-secondary: #8B8FA3;
+      --text-muted: #555770;
+      --accent-blue: #667EEA;
+      --accent-purple: #764BA2;
+      --accent-pink: #F093FB;
+      --gradient-primary: linear-gradient(135deg, #667EEA 0%, #764BA2 50%, #F093FB 100%);
+      --gradient-card: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(118, 75, 162, 0.05));
+      --green: #00D4AA;
+      --yellow: #FFC107;
+      --orange: #FF7043;
+      --red: #FF1744;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background animated gradients */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.05) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 80%, rgba(240, 147, 251, 0.03) 0%, transparent 50%);
+      animation: bgPulse 15s ease-in-out infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes bgPulse {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-2%, 1%) scale(1.02); }
+      66% { transform: translate(1%, -1%) scale(0.98); }
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(6, 7, 14, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      background: var(--gradient-primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .header-title span {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0, 212, 170, 0.1);
+      border: 1px solid rgba(0, 212, 170, 0.25);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(0, 212, 170, 0); }
+    }
+
+    .phase-badge {
+      padding: 6px 14px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid var(--border-glow);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── METRICS BAR ─── */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      padding: 20px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .metric-card:hover::before { opacity: 1; }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .metric-detail {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    /* ─── MAIN GRID ─── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      grid-template-rows: auto auto;
+      gap: 16px;
+      padding: 0 28px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .panel:hover {
+      border-color: var(--border-glow);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title-icon {
+      font-size: 16px;
+    }
+
+    .panel-body { padding: 16px 20px; }
+
+    /* ─── VENUE MAP ─── */
+    .map-panel { grid-row: 1 / 3; }
+
+    .venue-map-container {
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 500px;
+    }
+
+    .venue-map-svg {
+      width: 100%;
+      max-width: 850px;
+      height: auto;
+    }
+
+    .zone-rect {
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 1.5;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      rx: 6;
+      ry: 6;
+    }
+
+    .zone-rect:hover {
+      stroke: rgba(255, 255, 255, 0.6);
+      stroke-width: 2.5;
+      filter: brightness(1.3);
+    }
+
+    .zone-label {
+      fill: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 600;
+      text-anchor: middle;
+      pointer-events: none;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .zone-count {
+      fill: rgba(255, 255, 255, 0.8);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .zone-tooltip {
+      position: fixed;
+      background: rgba(10, 12, 25, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 12px;
+      z-index: 999;
+      pointer-events: none;
+      display: none;
+      min-width: 180px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .zone-tooltip.active { display: block; }
+
+    .zone-tooltip h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .zone-tooltip p {
+      color: var(--text-secondary);
+      margin: 3px 0;
+      font-size: 11px;
+    }
+
+    .zone-tooltip .density-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .zone-tooltip .density-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* Map Legend */
+    .map-legend {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    .legend-gradient {
+      width: 100px;
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #00D4AA, #4ECDC4, #FFC107, #FF7043, #FF1744);
+    }
+
+    /* ─── QUEUE MONITOR ─── */
+    .queue-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .queue-grid::-webkit-scrollbar { width: 4px; }
+    .queue-grid::-webkit-scrollbar-track { background: transparent; }
+    .queue-grid::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
+
+    .queue-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--gradient-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .queue-card:hover {
+      border-color: var(--border-glow);
+      background: var(--bg-card-hover);
+    }
+
+    .queue-vendor-name {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .queue-vendor-type {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .queue-stats {
+      text-align: right;
+    }
+
+    .queue-wait {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .queue-wait.low { color: var(--green); }
+    .queue-wait.medium { color: var(--yellow); }
+    .queue-wait.high { color: var(--orange); }
+    .queue-wait.critical { color: var(--red); }
+
+    .queue-people {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ─── ALERTS PANEL ─── */
+    .alerts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .alerts-list::-webkit-scrollbar { width: 4px; }
+    .alerts-list::-webkit-scrollbar-track { background: transparent; }
+    .alerts-list::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
+
+    .alert-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--gradient-card);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-10px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .alert-severity {
+      width: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .alert-severity.critical { background: var(--red); box-shadow: 0 0 8px rgba(255, 23, 68, 0.4); }
+    .alert-severity.warning { background: var(--orange); }
+    .alert-severity.info { background: var(--accent-blue); }
+
+    .alert-content { flex: 1; min-width: 0; }
+
+    .alert-message {
+      font-size: 11px;
+      color: var(--text-primary);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .alert-time {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── CONTROLS PANEL ─── */
+    .controls-section {
+      padding: 0 28px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      backdrop-filter: blur(12px);
+    }
+
+    .btn:hover {
+      border-color: var(--border-glow);
+      background: var(--bg-card-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: var(--gradient-primary);
+      border-color: transparent;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+      border-color: transparent;
+    }
+
+    .btn-danger {
+      border-color: rgba(255, 23, 68, 0.3);
+      color: var(--red);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 23, 68, 0.1);
+      border-color: rgba(255, 23, 68, 0.5);
+    }
+
+    .btn-warning {
+      border-color: rgba(255, 112, 67, 0.3);
+      color: var(--orange);
+    }
+
+    .btn-warning:hover {
+      background: rgba(255, 112, 67, 0.1);
+      border-color: rgba(255, 112, 67, 0.5);
+    }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: modalIn 0.3s ease;
+    }
+
+    @keyframes modalIn {
+      from { transform: scale(0.95) translateY(10px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .modal h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .empty-state-icon { font-size: 32px; margin-bottom: 10px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .map-panel { grid-row: auto; }
+      .metrics-bar { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .metrics-bar { grid-template-columns: repeat(2, 1fr); }
+      .header { padding: 0 16px; }
+      .main-grid { padding: 0 16px 16px; }
+      .controls-section { padding: 0 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ─── HEADER ─── -->
+  <header class="header" id="header">
+    <div class="header-left">
+      <div class="logo">🏟️</div>
+      <div class="header-title"><span>Venue Command Center</span></div>
+    </div>
+    <div class="header-right">
+      <div class="phase-badge" id="phaseBadge">IDLE</div>
+      <div class="status-badge" id="statusBadge">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── METRICS BAR ─── -->
+  <div class="metrics-bar" id="metricsBar">
+    <div class="metric-card">
+      <div class="metric-label">Total Attendees</div>
+      <div class="metric-value" id="metricAttendees">0</div>
+      <div class="metric-detail" id="metricCapacity">of 55,000 capacity</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Avg Density</div>
+      <div class="metric-value" id="metricDensity">0%</div>
+      <div class="metric-detail" id="metricDensityStatus">Normal</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Active Alerts</div>
+      <div class="metric-value" id="metricAlerts">0</div>
+      <div class="metric-detail" id="metricAlertsDetail">No issues detected</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Avg Wait Time</div>
+      <div class="metric-value" id="metricWaitTime">0m</div>
+      <div class="metric-detail" id="metricWaitDetail">Across all vendors</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Hotspot Zone</div>
+      <div class="metric-value" id="metricHotspot">—</div>
+      <div class="metric-detail" id="metricHotspotDetail">Most crowded area</div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN GRID ─── -->
+  <div class="main-grid">
+    <!-- Venue Map Panel -->
+    <div class="panel map-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🗺️</span> Live Venue Map
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);" id="mapTimestamp">Updated just now</div>
+      </div>
+      <div class="venue-map-container">
+        <svg class="venue-map-svg" viewBox="50 0 810 700" id="venueMap">
+          <!-- Background -->
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          <!-- Field (center) -->
+          <rect x="320" y="255" width="260" height="190" rx="14" ry="14" 
+                fill="rgba(0, 212, 170, 0.08)" stroke="rgba(0, 212, 170, 0.2)" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="450" y="345" text-anchor="middle" fill="rgba(0, 212, 170, 0.35)" 
+                font-family="Inter" font-size="14" font-weight="700">⚽ PLAYING FIELD</text>
+          <text x="450" y="365" text-anchor="middle" fill="rgba(0, 212, 170, 0.2)" 
+                font-family="Inter" font-size="9" font-weight="500">NOT ACCESSIBLE</text>
+
+          <!-- Zone rectangles will be rendered by JavaScript -->
+          <g id="zonesGroup"></g>
+        </svg>
+      </div>
+      <div class="map-legend">
+        <span style="font-weight: 600;">Density:</span>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #00D4AA;"></div> Low
+        </div>
+        <div class="legend-item">
+          <div class="legend-gradient"></div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #FF1744;"></div> Critical
+        </div>
+        <div style="flex: 1;"></div>
+        <span>Click zone for details</span>
+      </div>
+    </div>
+
+    <!-- Queue Monitor Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🍔</span> Queue Monitor
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);" id="queueCount">0 vendors</div>
+      </div>
+      <div class="panel-body">
+        <div class="queue-grid" id="queueGrid">
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            Start simulation to see queue data
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🔔</span> Alert Feed
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);" id="alertCount">0 active</div>
+      </div>
+      <div class="panel-body">
+        <div class="alerts-list" id="alertsList">
+          <div class="empty-state">
+            <div class="empty-state-icon">✅</div>
+            No alerts — venue is clear
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CONTROLS ─── -->
+  <div class="controls-section">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🎮</span> Simulation & Controls
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="controls-grid">
+          <button class="btn btn-primary" id="btnStartSim" onclick="startSimulation()">
+            ▶️ Start Simulation
+          </button>
+          <button class="btn btn-danger" id="btnStopSim" onclick="stopSimulation()">
+            ⏹️ Stop Simulation
+          </button>
+          <button class="btn btn-warning" onclick="setPhase('halftime')">
+            ⏱️ Jump to Halftime
+          </button>
+          <button class="btn btn-warning" onclick="setPhase('post-game')">
+            🚪 Jump to Post-Game
+          </button>
+          <button class="btn" onclick="openAlertModal()">
+            📢 Send Manual Alert
+          </button>
+          <button class="btn" onclick="openNotifyModal()">
+            📱 Send Notification
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ZONE TOOLTIP ─── -->
+  <div class="zone-tooltip" id="zoneTooltip">
+    <h4 id="tooltipName"></h4>
+    <p id="tooltipType"></p>
+    <p id="tooltipCount"></p>
+    <p id="tooltipDensity"></p>
+    <div class="density-bar">
+      <div class="density-fill" id="tooltipDensityBar"></div>
+    </div>
+  </div>
+
+  <!-- ─── ALERT MODAL ─── -->
+  <div class="modal-overlay" id="alertModal">
+    <div class="modal">
+      <h3>📢 Send Manual Alert</h3>
+      <div class="form-group">
+        <label>Severity</label>
+        <select id="alertSeverity">
+          <option value="info">Info</option>
+          <option value="warning" selected>Warning</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="alertMessage" placeholder="Enter alert message for operators..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('alertModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="sendAlert()">Send Alert</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── NOTIFICATION MODAL ─── -->
+  <div class="modal-overlay" id="notifyModal">
+    <div class="modal">
+      <h3>📱 Send Push Notification</h3>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="notifyTitle" placeholder="e.g., Gate Closure Notice">
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="notifyMessage" placeholder="Enter notification message for attendees..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('notifyModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="sendNotification()">Send Notification</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SOCKET.IO CLIENT ─── -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════
+    const API_BASE = window.location.origin;
+    let socket = null;
+    let currentState = null;
+    let zoneElements = {};
+
+    // Zone color mapping
+    function densityColor(d) {
+      if (d <= 0) return 'rgba(0, 212, 170, 0.2)';
+      if (d < 0.15) return 'rgba(0, 212, 170, 0.35)';
+      if (d < 0.3) return 'rgba(0, 212, 170, 0.55)';
+      if (d < 0.5) return 'rgba(78, 205, 196, 0.65)';
+      if (d < 0.65) return 'rgba(255, 193, 7, 0.65)';
+      if (d < 0.8) return 'rgba(255, 152, 0, 0.7)';
+      if (d < 0.9) return 'rgba(255, 112, 67, 0.75)';
+      if (d < 0.95) return 'rgba(255, 82, 82, 0.8)';
+      return 'rgba(255, 23, 68, 0.85)';
+    }
+
+    function densityColorSolid(d) {
+      if (d < 0.3) return '#00D4AA';
+      if (d < 0.6) return '#FFC107';
+      if (d < 0.8) return '#FF7043';
+      return '#FF1744';
+    }
+
+    function waitClass(seconds) {
+      const min = seconds / 60;
+      if (min < 2) return 'low';
+      if (min < 5) return 'medium';
+      if (min < 10) return 'high';
+      return 'critical';
+    }
+
+    function formatTime(seconds) {
+      if (seconds < 60) return `${Math.round(seconds)}s`;
+      return `${Math.round(seconds / 60)}m`;
+    }
+
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      if (diff < 5000) return 'just now';
+      if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
+      return `${Math.floor(diff / 60000)}m ago`;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER VENUE MAP
+    // ═══════════════════════════════════════════════════════════
+    function renderMap(zones) {
+      const group = document.getElementById('zonesGroup');
+      
+      // Only create elements once
+      if (Object.keys(zoneElements).length === 0) {
+        group.innerHTML = '';
+        for (const zone of zones) {
+          // Zone rectangle
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('class', 'zone-rect');
+          rect.setAttribute('x', zone.x);
+          rect.setAttribute('y', zone.y);
+          rect.setAttribute('width', zone.w);
+          rect.setAttribute('height', zone.h);
+          rect.setAttribute('data-zone-id', zone.id);
+
+          // Zone label
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('class', 'zone-label');
+          label.setAttribute('x', zone.x + zone.w / 2);
+          label.setAttribute('y', zone.y + zone.h / 2 - 4);
+          label.textContent = zone.name;
+
+          // Zone count
+          const count = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          count.setAttribute('class', 'zone-count');
+          count.setAttribute('x', zone.x + zone.w / 2);
+          count.setAttribute('y', zone.y + zone.h / 2 + 10);
+          count.textContent = '0';
+
+          group.appendChild(rect);
+          group.appendChild(label);
+          group.appendChild(count);
+
+          zoneElements[zone.id] = { rect, label, count };
+
+          // Tooltip events
+          rect.addEventListener('mouseenter', (e) => showTooltip(e, zone));
+          rect.addEventListener('mousemove', (e) => moveTooltip(e));
+          rect.addEventListener('mouseleave', hideTooltip);
+        }
+      }
+
+      // Update colors and counts
+      for (const zone of zones) {
+        const el = zoneElements[zone.id];
+        if (!el) continue;
+        el.rect.setAttribute('fill', densityColor(zone.density || 0));
+        el.count.textContent = (zone.currentCount || 0).toLocaleString();
+
+        // Add glow effect to critical zones
+        if (zone.density > 0.9) {
+          el.rect.setAttribute('filter', 'url(#glow)');
+          el.rect.setAttribute('stroke', 'rgba(255, 23, 68, 0.6)');
+        } else {
+          el.rect.removeAttribute('filter');
+          el.rect.setAttribute('stroke', 'rgba(255, 255, 255, 0.15)');
+        }
+      }
+    }
+
+    // ─── Tooltip ───
+    function showTooltip(e, zone) {
+      const tp = document.getElementById('zoneTooltip');
+      const latestZone = currentState?.zones.find(z => z.id === zone.id) || zone;
+      
+      document.getElementById('tooltipName').textContent = latestZone.name;
+      document.getElementById('tooltipType').textContent = `Type: ${latestZone.type.replace('_', ' ')}`;
+      document.getElementById('tooltipCount').textContent = `People: ${(latestZone.currentCount || 0).toLocaleString()} / ${latestZone.capacity.toLocaleString()}`;
+      const densityPct = Math.round((latestZone.density || 0) * 100);
+      document.getElementById('tooltipDensity').textContent = `Density: ${densityPct}%`;
+      
+      const bar = document.getElementById('tooltipDensityBar');
+      bar.style.width = `${densityPct}%`;
+      bar.style.background = densityColorSolid(latestZone.density || 0);
+
+      tp.classList.add('active');
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      const tp = document.getElementById('zoneTooltip');
+      tp.style.left = (e.clientX + 15) + 'px';
+      tp.style.top = (e.clientY - 10) + 'px';
+    }
+
+    function hideTooltip() {
+      document.getElementById('zoneTooltip').classList.remove('active');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER QUEUE MONITOR
+    // ═══════════════════════════════════════════════════════════
+    function renderQueues(vendors) {
+      const grid = document.getElementById('queueGrid');
+      const sorted = [...vendors].sort((a, b) => b.currentQueue - a.currentQueue);
+
+      document.getElementById('queueCount').textContent = `${vendors.length} vendors`;
+
+      if (vendors.length === 0 || vendors.every(v => v.currentQueue === 0)) {
+        grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div>Start simulation to see queue data</div>`;
+        return;
+      }
+
+      grid.innerHTML = sorted.map(v => {
+        const wClass = waitClass(v.estimatedWait);
+        return `<div class="queue-card">
+          <div>
+            <div class="queue-vendor-name">${v.name}</div>
+            <div class="queue-vendor-type">${v.type} · ${v.zoneId}</div>
+          </div>
+          <div class="queue-stats">
+            <div class="queue-wait ${wClass}">${formatTime(v.estimatedWait)}</div>
+            <div class="queue-people">${v.currentQueue} in line</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER ALERTS
+    // ═══════════════════════════════════════════════════════════
+    function renderAlerts(alerts) {
+      const list = document.getElementById('alertsList');
+      const active = alerts.filter(a => !a.isResolved);
+
+      document.getElementById('alertCount').textContent = `${active.length} active`;
+      document.getElementById('metricAlerts').textContent = active.length;
+      document.getElementById('metricAlertsDetail').textContent = 
+        active.length === 0 ? 'No issues detected' : 
+        `${active.filter(a => a.severity === 'critical').length} critical`;
+
+      if (active.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div>No alerts — venue is clear</div>`;
+        return;
+      }
+
+      list.innerHTML = active.slice(0, 15).map(a => `
+        <div class="alert-item">
+          <div class="alert-severity ${a.severity}"></div>
+          <div class="alert-content">
+            <div class="alert-message">${a.message}</div>
+            <div class="alert-time">${timeAgo(a.createdAt)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER METRICS
+    // ═══════════════════════════════════════════════════════════
+    function renderMetrics(state) {
+      // Total attendees
+      const total = state.totalAttendees || 0;
+      document.getElementById('metricAttendees').textContent = total.toLocaleString();
+      const capacity = state.venue?.capacity || 55000;
+      document.getElementById('metricCapacity').textContent = 
+        `of ${capacity.toLocaleString()} (${Math.round(total / capacity * 100)}%)`;
+
+      // Average density
+      const zones = state.zones || [];
+      const avgDensity = zones.length > 0 
+        ? zones.reduce((sum, z) => sum + (z.density || 0), 0) / zones.length 
+        : 0;
+      document.getElementById('metricDensity').textContent = `${Math.round(avgDensity * 100)}%`;
+      
+      let dStatus = 'Normal';
+      if (avgDensity > 0.8) dStatus = '🔴 Critical';
+      else if (avgDensity > 0.6) dStatus = '🟠 Elevated';
+      else if (avgDensity > 0.3) dStatus = '🟡 Moderate';
+      else if (avgDensity > 0) dStatus = '🟢 Normal';
+      document.getElementById('metricDensityStatus').textContent = dStatus;
+
+      // Average wait time
+      const vendors = state.vendors || [];
+      const activeVendors = vendors.filter(v => v.currentQueue > 0);
+      const avgWait = activeVendors.length > 0
+        ? activeVendors.reduce((sum, v) => sum + v.estimatedWait, 0) / activeVendors.length
+        : 0;
+      document.getElementById('metricWaitTime').textContent = formatTime(avgWait);
+      document.getElementById('metricWaitDetail').textContent = `${activeVendors.length} vendors active`;
+
+      // Hotspot
+      if (zones.length > 0) {
+        const hotspot = zones.reduce((max, z) => (z.density || 0) > (max.density || 0) ? z : max, zones[0]);
+        document.getElementById('metricHotspot').textContent = 
+          hotspot.density > 0 ? hotspot.name.split(' ')[0] : '—';
+        document.getElementById('metricHotspotDetail').textContent = 
+          hotspot.density > 0 ? `${Math.round(hotspot.density * 100)}% density` : 'No data yet';
+      }
+
+      // Phase badge
+      document.getElementById('phaseBadge').textContent = (state.simulationPhase || 'idle').toUpperCase();
+      
+      // Map timestamp
+      document.getElementById('mapTimestamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBSOCKET CONNECTION
+    // ═══════════════════════════════════════════════════════════
+    function connectSocket() {
+      socket = io(API_BASE);
+
+      socket.on('connect', () => {
+        console.log('[WS] Connected');
+        document.getElementById('statusText').textContent = 'Connected';
+        document.getElementById('statusDot').style.background = 'var(--green)';
+      });
+
+      socket.on('disconnect', () => {
+        console.log('[WS] Disconnected');
+        document.getElementById('statusText').textContent = 'Disconnected';
+        document.getElementById('statusDot').style.background = 'var(--red)';
+        document.getElementById('statusDot').style.animation = 'none';
+      });
+
+      socket.on('state', (state) => {
+        currentState = state;
+        renderMap(state.zones || []);
+        renderQueues(state.vendors || []);
+        renderAlerts(state.alerts || []);
+        renderMetrics(state);
+      });
+
+      socket.on('alert', (alert) => {
+        console.log('[Alert]', alert);
+      });
+
+      socket.on('notification', (notif) => {
+        console.log('[Notification]', notif);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // API ACTIONS
+    // ═══════════════════════════════════════════════════════════
+    async function startSimulation() {
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ interval: 2000 }),
+        });
+        const data = await res.json();
+        console.log('[Simulation] Started:', data);
+      } catch (err) {
+        console.error('Failed to start simulation:', err);
+      }
+    }
+
+    async function stopSimulation() {
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/stop`, { method: 'POST' });
+        const data = await res.json();
+        console.log('[Simulation] Stopped:', data);
+      } catch (err) {
+        console.error('Failed to stop simulation:', err);
+      }
+    }
+
+    async function setPhase(phase) {
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/phase`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phase }),
+        });
+        const data = await res.json();
+        console.log('[Simulation] Phase:', data);
+      } catch (err) {
+        console.error('Failed to set phase:', err);
+      }
+    }
+
+    function openAlertModal() {
+      document.getElementById('alertModal').classList.add('active');
+    }
+
+    function openNotifyModal() {
+      document.getElementById('notifyModal').classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    async function sendAlert() {
+      const severity = document.getElementById('alertSeverity').value;
+      const message = document.getElementById('alertMessage').value;
+      if (!message) return;
+
+      try {
+        await fetch(`${API_BASE}/api/alerts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ severity, message, type: 'manual' }),
+        });
+        closeModal('alertModal');
+        document.getElementById('alertMessage').value = '';
+      } catch (err) {
+        console.error('Failed to send alert:', err);
+      }
+    }
+
+    async function sendNotification() {
+      const title = document.getElementById('notifyTitle').value;
+      const message = document.getElementById('notifyMessage').value;
+      if (!message) return;
+
+      try {
+        await fetch(`${API_BASE}/api/notifications`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, message, type: 'manual', severity: 'info' }),
+        });
+        closeModal('notifyModal');
+        document.getElementById('notifyTitle').value = '';
+        document.getElementById('notifyMessage').value = '';
+      } catch (err) {
+        console.error('Failed to send notification:', err);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      connectSocket();
+    });
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+  </script>
+</body>
+</html>

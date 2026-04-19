@@ -1,0 +1,78 @@
+version: '3.8'
+
+# ═══════════════════════════════════════════════════════════
+#  Intelligent Venue Experience Platform — Production Stack
+#  
+#  This Docker Compose file is a REFERENCE for production
+#  deployment. The MVP runs without Docker using in-memory state.
+#  
+#  To use: docker-compose up -d
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ─── API Server ───
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://venue:venue_pass@postgres:5432/venue_platform
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/venue"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── Redis (Real-time State) ───
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # ─── PostgreSQL (Persistent Storage) ───
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: venue_platform
+      POSTGRES_USER: venue
+      POSTGRES_PASSWORD: venue_pass
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # ─── Kafka (Event Streaming) — Production upgrade ───
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.5.0
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #   depends_on:
+  #     - zookeeper
+
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.5.0
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+
+volumes:
+  redis-data:
+  postgres-data:
